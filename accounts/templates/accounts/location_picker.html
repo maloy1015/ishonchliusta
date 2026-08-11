@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Lokatsiyani belgilash{% endblock %}
+{% block content %}
+
+<div class="page-hero">
+  <h3>📍 Lokatsiyangizni belgilang</h3>
+  <p>GPS orqali avtomatik aniqlang, manzil bo'yicha qidiring yoki xaritadan bosib tanlang</p>
+</div>
+
+<div class="card p-3 p-md-4 mb-4">
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <button type="button" id="btnGps" class="btn btn-primary btn-sm">📡 GPS orqali aniqlash</button>
+  </div>
+
+  <div class="input-group mb-3">
+    <span class="input-group-text bg-white">🔎</span>
+    <input type="text" id="addressInput" class="form-control" placeholder="Manzilingizni yozing, masalan: Chilonzor, Toshkent">
+    <button type="button" id="btnSearch" class="btn btn-outline-primary">Qidirish</button>
+  </div>
+  <div id="searchResults" class="list-group mb-3" style="display:none;"></div>
+
+  <div id="map" style="height:380px; border-radius:14px; overflow:hidden;"></div>
+  <p class="text-muted small mt-2 mb-0">💡 Xaritaning istalgan nuqtasiga bosib, lokatsiyangizni qo'lda ham belgilashingiz mumkin.</p>
+
+  <div id="statusMsg" class="small mt-2"></div>
+
+  <div class="d-flex gap-2 mt-3">
+    <button type="button" id="btnSave" class="btn btn-accent" disabled>💾 Saqlash</button>
+    <a href="{% url 'accounts:profile_detail' user.pk %}" class="btn btn-outline-secondary">Bekor qilish</a>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+function getCookie(name) {
+    const value = "; " + document.cookie;
+    const parts = value.split("; " + name + "=");
+    if (parts.length === 2) return parts.pop().split(";").shift();
+    return "";
+}
+const csrftoken = getCookie('csrftoken');
+
+const startLat = {{ user.latitude|default:"41.311081" }};
+const startLng = {{ user.longitude|default:"69.240562" }};
+
+const map = L.map('map').setView([startLat, startLng], {{ user.latitude|yesno:"13,11" }});
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap hissa qo\'shuvchilari'
+}).addTo(map);
+
+let marker = null;
+let pendingAddress = "{{ user.address|default:'' }}";
+
+function setMarker(lat, lng, panTo){
+    if (marker) { map.removeLayer(marker); }
+    marker = L.marker([lat, lng], {draggable: true}).addTo(map);
+    marker.on('dragend', function(e){
+        const pos = marker.getLatLng();
+        selectedLat = pos.lat; selectedLng = pos.lng;
+        document.getElementById('btnSave').disabled = false;
+    });
+    if (panTo) map.setView([lat, lng], 15);
+}
+
+let selectedLat = {{ user.latitude|default:"null" }};
+let selectedLng = {{ user.longitude|default:"null" }};
+if (selectedLat && selectedLng) { setMarker(selectedLat, selectedLng, false); }
+
+map.on('click', function(e){
+    selectedLat = e.latlng.lat;
+    selectedLng = e.latlng.lng;
+    setMarker(selectedLat, selectedLng, false);
+    document.getElementById('btnSave').disabled = false;
+    document.getElementById('statusMsg').innerHTML = '📍 Xaritadan nuqta tanlandi.';
+});
+
+// GPS orqali aniqlash
+document.getElementById('btnGps').addEventListener('click', function(){
+    const status = document.getElementById('statusMsg');
+    if (!navigator.geolocation) { status.innerHTML = '⚠️ Brauzeringiz GPS-ni qo\'llab-quvvatlamaydi.'; return; }
+    status.innerHTML = '📡 Aniqlanmoqda...';
+    navigator.geolocation.getCurrentPosition(function(pos){
+        selectedLat = pos.coords.latitude;
+        selectedLng = pos.coords.longitude;
+        setMarker(selectedLat, selectedLng, true);
+        document.getElementById('btnSave').disabled = false;
+        status.innerHTML = '✅ GPS orqali aniqlandi.';
+    }, function(){
+        status.innerHTML = '❌ Lokatsiyaga ruxsat berilmadi. Manzil yozib qidiring yoki xaritadan bosib tanlang.';
+    });
+});
+
+// Manzil bo'yicha qidirish (OpenStreetMap Nominatim — bepul geokodlash xizmati)
+document.getElementById('btnSearch').addEventListener('click', function(){
+    const q = document.getElementById('addressInput').value.trim();
+    const status = document.getElementById('statusMsg');
+    const resultsBox = document.getElementById('searchResults');
+    if (!q) return;
+    status.innerHTML = '🔎 Qidirilmoqda...';
+    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&q=' + encodeURIComponent(q))
+        .then(r => r.json())
+        .then(data => {
+            resultsBox.innerHTML = '';
+            if (!data.length) {
+                status.innerHTML = '❌ Hech narsa topilmadi. Boshqacha yozib ko\'ring.';
+                resultsBox.style.display = 'none';
+                return;
+            }
+            status.innerHTML = '';
+            data.forEach(item => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'list-group-item list-group-item-action';
+                btn.textContent = item.display_name;
+                btn.addEventListener('click', function(){
+                    selectedLat = parseFloat(item.lat);
+                    selectedLng = parseFloat(item.lon);
+                    pendingAddress = item.display_name;
+                    setMarker(selectedLat, selectedLng, true);
+                    document.getElementById('btnSave').disabled = false;
+                    resultsBox.style.display = 'none';
+                    document.getElementById('addressInput').value = item.display_name;
+                });
+                resultsBox.appendChild(btn);
+            });
+            resultsBox.style.display = '';
+        })
+        .catch(() => { status.innerHTML = '⚠️ Qidiruvda xatolik yuz berdi. Internetni tekshiring.'; });
+});
+
+// Saqlash
+document.getElementById('btnSave').addEventListener('click', function(){
+    const status = document.getElementById('statusMsg');
+    if (selectedLat == null || selectedLng == null) return;
+    const addressText = document.getElementById('addressInput').value.trim() || pendingAddress;
+    fetch("{% url 'accounts:update_location' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+        body: JSON.stringify({ latitude: selectedLat, longitude: selectedLng, address: addressText }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            status.innerHTML = '✅ Lokatsiya saqlandi!';
+            sessionStorage.setItem('locationSent', '1');
+            setTimeout(() => { window.location.href = "{% url 'accounts:profile_detail' user.pk %}"; }, 800);
+        } else {
+            status.innerHTML = '❌ Xatolik yuz berdi.';
+        }
+    });
+});
+</script>
+{% endblock %}

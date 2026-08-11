@@ -1,0 +1,259 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ishonchli Usta{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+    <style>
+        :root{
+            --brand:#0d9488;
+            --brand-dark:#0f766e;
+            --brand-light:#f0fdfa;
+            --brand-2:#14b8a6;
+            --accent:#f59e0b;
+            --accent-dark:#d97706;
+            --bg:#f4f6f8;
+            --ink:#111827;
+            --muted:#6b7280;
+            --radius:18px;
+        }
+        *{box-sizing:border-box;}
+        body{font-family:'Inter',sans-serif; background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased;}
+        a{text-decoration:none;}
+        h1,h2,h3,h4,h5,h6{font-weight:800; letter-spacing:-.01em;}
+
+        /* ---------- Navbar ---------- */
+        .navbar{
+            background:#fff!important; box-shadow:0 1px 0 rgba(17,24,39,.06), 0 8px 24px rgba(17,24,39,.04);
+            position:sticky; top:0; z-index:200; padding:10px 0;
+        }
+        .navbar-brand{
+            font-weight:900; font-size:1.25rem; letter-spacing:-.02em;
+            background:linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+        }
+        .nav-link-custom{
+            color:#374151; font-size:.87rem; font-weight:600; padding:8px 13px; border-radius:10px; transition:.15s; display:block;
+        }
+        .nav-link-custom:hover{background:var(--brand-light); color:var(--brand-dark);}
+        .nav-link-cat{
+            color:#fff; background:linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            font-size:.87rem; font-weight:700; padding:8px 14px; border-radius:10px; border:none;
+        }
+        .badge-role{font-size:.66rem; letter-spacing:.06em; font-weight:800; padding:5px 10px; border-radius:8px;}
+
+        /* ---------- Buttons (animatsiyali) ---------- */
+        .btn{
+            border-radius:11px; font-weight:600; padding:.5rem 1.1rem;
+            transition:transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease, filter .15s ease, background .15s ease;
+            position:relative; overflow:hidden;
+        }
+        .btn:hover{ transform:translateY(-2px); }
+        .btn:active{ transform:translateY(0) scale(.97); transition-duration:.08s; }
+        .btn-sm{border-radius:9px;}
+        .btn-primary{background:linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%); border:none; box-shadow:0 4px 12px rgba(13,148,136,.28);}
+        .btn-primary:hover{filter:brightness(1.08); box-shadow:0 8px 20px rgba(13,148,136,.4);}
+        .btn-outline-primary{color:var(--brand-dark); border-color:var(--brand); font-weight:600;}
+        .btn-outline-primary:hover{background:var(--brand); border-color:var(--brand); box-shadow:0 6px 16px rgba(13,148,136,.25);}
+        .btn-outline-secondary:hover{box-shadow:0 6px 14px rgba(17,24,39,.12);}
+        .btn-outline-danger:hover{box-shadow:0 6px 14px rgba(220,38,38,.18);}
+        .btn-light:hover{box-shadow:0 6px 16px rgba(0,0,0,.15);}
+        .btn-accent{background:linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); border:none; color:#fff; font-weight:700; box-shadow:0 4px 12px rgba(245,158,11,.3);}
+        .btn-accent:hover{filter:brightness(1.08); color:#fff; box-shadow:0 8px 20px rgba(245,158,11,.4);}
+        .btn::after{
+            content:""; position:absolute; inset:0; border-radius:inherit;
+            background:radial-gradient(circle, rgba(255,255,255,.5) 0%, transparent 60%);
+            opacity:0; transform:scale(0); transition:opacity .4s ease, transform .4s ease; pointer-events:none;
+        }
+        .btn:active::after{ opacity:1; transform:scale(2); transition:0s; }
+        a.quick-tile, a.nav-link-custom, .cat-chip, .dist-chip{ transition:transform .15s ease, box-shadow .15s ease, background .15s ease; }
+        .cat-chip:hover, .dist-chip:hover{ transform:translateY(-1px); }
+
+        /* ---------- Cards & layout ---------- */
+        .card{border:none; border-radius:var(--radius); box-shadow:0 1px 2px rgba(17,24,39,.04), 0 8px 24px rgba(17,24,39,.06); transition:transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease;}
+        .card.hoverable:hover{transform:translateY(-4px); box-shadow:0 14px 32px rgba(17,24,39,.14);}
+        .page-wrap{max-width:1150px; margin:0 auto; padding:22px 14px 90px;}
+
+        /* ---------- Hero header ---------- */
+        .page-hero{
+            background:linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 55%, #2dd4bf 100%);
+            border-radius:22px; padding:32px 30px; color:#fff; margin-bottom:22px;
+            box-shadow:0 12px 32px rgba(13,148,136,.28); position:relative; overflow:hidden;
+        }
+        .page-hero::after{
+            content:""; position:absolute; right:-40px; top:-40px; width:200px; height:200px; border-radius:50%;
+            background:rgba(255,255,255,.10);
+        }
+        .page-hero h1, .page-hero h3{color:#fff; margin-bottom:4px; position:relative;}
+        .page-hero p{color:rgba(255,255,255,.88); margin-bottom:0; position:relative;}
+
+        /* ---------- Chips / badges ---------- */
+        .cat-chip{display:inline-flex; align-items:center; gap:4px; padding:5px 13px; border-radius:20px; background:var(--brand-light); color:var(--brand-dark); font-size:.8rem; font-weight:700;}
+        .dist-chip{display:inline-flex; align-items:center; gap:4px; padding:4px 11px; border-radius:20px; background:#eef2ff; color:#4338ca; font-size:.76rem; font-weight:700;}
+        .stars{color:var(--accent); letter-spacing:1px;}
+
+        /* ---------- Avatars ---------- */
+        .avatar-sm{width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.06);}
+        .avatar-lg{width:100px; height:100px; border-radius:50%; object-fit:cover; border:4px solid #fff; box-shadow:0 4px 14px rgba(0,0,0,.15);}
+        .avatar-placeholder{display:flex; align-items:center; justify-content:center; background:var(--brand-light); border-radius:50%; font-size:1.6rem; border:2px solid #fff;}
+
+        /* ---------- Ownership ribbon ---------- */
+        .own-banner{
+            background:linear-gradient(90deg, #ecfdf5, #d1fae5); border:1px solid #6ee7b7; color:#065f46;
+            border-radius:14px; padding:10px 16px; font-weight:700; font-size:.85rem; margin-bottom:16px;
+            display:flex; align-items:center; gap:8px;
+        }
+        .viewing-banner{
+            background:linear-gradient(90deg, #eff6ff, #dbeafe); border:1px solid #93c5fd; color:#1e3a8a;
+            border-radius:14px; padding:10px 16px; font-weight:600; font-size:.85rem; margin-bottom:16px;
+            display:flex; align-items:center; gap:8px;
+        }
+
+        .empty-state{background:#fff; border-radius:var(--radius); padding:48px 20px; text-align:center; color:var(--muted); box-shadow:0 1px 2px rgba(17,24,39,.04), 0 8px 24px rgba(17,24,39,.06);}
+        .section-title{font-weight:800; font-size:1.15rem; margin-bottom:14px; display:flex; align-items:center; gap:8px;}
+        .quick-tile{
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+            background:#fff; border-radius:16px; padding:18px 10px; text-align:center; color:var(--ink);
+            box-shadow:0 1px 2px rgba(17,24,39,.04), 0 8px 24px rgba(17,24,39,.06);
+            transition:transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease, color .2s ease; height:100%;
+        }
+        .quick-tile:hover{transform:translateY(-5px) scale(1.02); box-shadow:0 14px 32px rgba(17,24,39,.16); color:var(--brand-dark);}
+        .quick-tile .icon{font-size:1.9rem; transition:transform .25s cubic-bezier(.34,1.56,.64,1);}
+        .quick-tile:hover .icon{transform:scale(1.18) rotate(-6deg);}
+
+        /* ---------- Mobile ---------- */
+        @media (max-width:991px){
+            .navbar-collapse{
+                background:#fff; margin-top:10px; padding:12px; border-radius:14px;
+                box-shadow:0 8px 24px rgba(17,24,39,.10);
+            }
+            .nav-link-custom, .nav-link-cat{ margin-bottom:6px; }
+            .navbar .d-flex.align-items-center.gap-2{ flex-direction:column; align-items:stretch!important; }
+        }
+        @media (max-width:768px){
+            .page-wrap{padding:16px 10px 80px;}
+            .page-hero{padding:22px 18px; border-radius:18px;}
+            .page-hero h3{font-size:1.35rem;}
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'accounts:dashboard' %}">🛠️ Ishonchli&nbsp;Usta</a>
+        {% if user.is_authenticated %}
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" style="border:none;">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navMain">
+            <div class="d-flex align-items-center gap-2 flex-wrap ms-lg-auto">
+                {% if user.is_worker %}
+                    <span class="badge bg-info text-dark badge-role align-self-center">USTA</span>
+                    <a href="{% url 'jobs:job_list' %}" class="nav-link-custom">Ish qidirish</a>
+                    <a href="{% url 'accounts:profile_detail' user.pk %}" class="nav-link-custom">Mening profilim</a>
+                {% else %}
+                    <span class="badge bg-warning text-dark badge-role align-self-center">ISH BERUVCHI</span>
+                    <a href="{% url 'workers:worker_list' %}" class="nav-link-custom">Ustalar</a>
+                    <a href="{% url 'jobs:my_jobs' %}" class="nav-link-custom">Mening e'lonlarim</a>
+                    <a href="{% url 'jobs:job_create' %}" class="nav-link-custom">+ E'lon berish</a>
+                    <a href="{% url 'ratings:leaderboard' %}" class="nav-link-custom">⭐ Reyting</a>
+                {% endif %}
+                <button type="button" class="nav-link-cat" data-bs-toggle="modal" data-bs-target="#categoriesModal">🗂️ Kategoriyalar</button>
+                <a href="{% url 'chat:inbox' %}" class="nav-link-custom">💬 Chat</a>
+                <a href="{% url 'accounts:profile_detail' user.pk %}" class="d-flex align-items-center gap-1 text-muted small nav-link-custom">
+                    {% if user.profile_image %}
+                        <img src="{{ user.profile_image.url }}" class="avatar-sm">
+                    {% else %}
+                        👤
+                    {% endif %}
+                    {{ user.first_name|default:user.username }}
+                </a>
+                <form action="{% url 'accounts:logout' %}" method="post" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-secondary btn-sm w-100">Chiqish</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="d-flex align-items-center gap-2">
+            <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-sm">Kirish</a>
+            <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">Ro'yxatdan o'tish</a>
+        </div>
+        {% endif %}
+    </div>
+</nav>
+
+<div class="page-wrap">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</div>
+
+{% if user.is_authenticated %}
+    {% include "partials/categories_modal.html" %}
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{% if user.is_authenticated %}
+<script>
+(function () {
+    if (!navigator.geolocation) return;
+
+    let lastSentAt = 0;
+    const THROTTLE_MS = 15000; // 15 soniyada bir marta serverga yuborish (jonli kuzatuv uchun)
+
+    function sendLocation(lat, lng) {
+        fetch("{% url 'accounts:update_location' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie('csrftoken'),
+            },
+            body: JSON.stringify({latitude: lat, longitude: lng}),
+        }).then(function () { sessionStorage.setItem('locationSent', '1'); });
+    }
+
+    function getCookie(name) {
+        const value = "; " + document.cookie;
+        const parts = value.split("; " + name + "=");
+        if (parts.length === 2) return parts.pop().split(";").shift();
+        return "";
+    }
+
+    // watchPosition — sahifa ochiq turgan vaqtda lokatsiyani doimiy kuzatib, throttling bilan serverga yuboradi.
+    // Bu "jonli kuzatuv" (masalan chat ichidagi Jonli lokatsiya xaritasi) uchun ma'lumotni yangilab turadi.
+    navigator.geolocation.watchPosition(function (pos) {
+        const now = Date.now();
+        if (now - lastSentAt > THROTTLE_MS) {
+            lastSentAt = now;
+            sendLocation(pos.coords.latitude, pos.coords.longitude);
+        }
+    }, function () {
+        {% if not user.latitude %}
+        if (!sessionStorage.getItem('locationBannerShown')) {
+            sessionStorage.setItem('locationBannerShown', '1');
+            const banner = document.createElement('div');
+            banner.className = 'alert alert-warning alert-dismissible fade show';
+            banner.style.cssText = 'position:fixed; bottom:16px; left:16px; right:16px; max-width:420px; margin:0 auto; z-index:999; border-radius:14px;';
+            banner.innerHTML = '📍 Lokatsiyangizga ruxsat berilmadi. <a href="{% url "accounts:location_picker" %}">Qo\'lda belgilash</a> uchun bosing.' +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+            document.body.appendChild(banner);
+        }
+        {% endif %}
+    }, { enableHighAccuracy: false, maximumAge: 10000, timeout: 10000 });
+})();
+</script>
+{% endif %}
+</body>
+</html>

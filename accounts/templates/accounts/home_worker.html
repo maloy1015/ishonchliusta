@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Bosh sahifa{% endblock %}
+{% block content %}
+
+<div class="page-hero">
+  <h3>Assalomu alaykum, {{ user.first_name|default:user.username }}! 👋</h3>
+  <p>Sizga mos ish e'lonlarini shu yerdan toping</p>
+  <div class="mt-3 d-flex gap-2 flex-wrap">
+    <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#categoriesModal">🗂️ Kategoriyalar</button>
+    <a href="{% url 'jobs:job_list' %}" class="btn btn-accent">🔎 Ish qidirish</a>
+    <a href="{% url 'payments:boost_worker' %}" class="btn btn-light">⚡ Tezkor ish topish</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <a href="{% url 'jobs:job_list' %}" class="quick-tile">
+      <div class="icon">💼</div>
+      <div class="fw-semibold small">Ish qidirish</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="{% url 'accounts:profile_detail' user.pk %}" class="quick-tile">
+      <div class="icon">👤</div>
+      <div class="fw-semibold small">Mening profilim</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="{% url 'workers:post_create' %}" class="quick-tile">
+      <div class="icon">📸</div>
+      <div class="fw-semibold small">Post qo'shish</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="{% url 'accounts:location_picker' %}" class="quick-tile">
+      <div class="icon">📍</div>
+      <div class="fw-semibold small">Lokatsiya</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="{% url 'chat:inbox' %}" class="quick-tile">
+      <div class="icon">💬</div>
+      <div class="fw-semibold small">Chat</div>
+    </a>
+  </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="section-title mb-0">🆕 So'nggi ish e'lonlari</div>
+  <a href="{% url 'jobs:job_list' %}" class="small">Barchasi &rarr;</a>
+</div>
+<div class="row g-3">
+  {% for job in recent_jobs %}
+    <div class="col-md-6">
+      <div class="card hoverable p-3 h-100">
+        <span class="cat-chip">{{ job.category.icon }} {{ job.category.name|default:"—" }}</span>
+        <h5 class="mt-2 mb-1">{{ job.title }}</h5>
+        <p class="small text-muted mb-2">{{ job.description|truncatewords:20 }}</p>
+        <a href="{% url 'accounts:profile_detail' job.employer.pk %}" class="btn btn-outline-primary btn-sm mt-auto">Batafsil</a>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12"><div class="empty-state">Hozircha e'lon yo'q.</div></div>
+  {% endfor %}
+</div>
+{% endblock %}

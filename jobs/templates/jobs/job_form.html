@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}E'lon berish{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card p-4">
+      <h4 class="mb-4">💼 Yangi ish e'loni</h4>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|striptags }}</div>{% endif %}
+          </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary w-100">E'lonni joylash</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+<div class="modal fade" id="categoriesModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content" style="border-radius:20px; border:none;">
+      <div class="modal-header" style="background:linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%); color:#fff; border-radius:20px 20px 0 0;">
+        <h5 class="modal-title">🗂️ Barcha kasb kategoriyalari</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">
+          {% if user.is_worker %}
+            Kategoriyani tanlasangiz, o'sha kasbga oid barcha ish e'lonlarini ko'rasiz.
+          {% else %}
+            Kategoriyani tanlasangiz, o'sha kasb bo'yicha barcha ustalarni ko'rasiz.
+          {% endif %}
+        </p>
+        <div class="row g-2">
+          {% for cat in nav_categories %}
+            <div class="col-6 col-md-4">
+              {% if user.is_worker %}
+                <a href="{% url 'jobs:job_list' %}?category={{ cat.pk }}" class="d-block text-center p-3 rounded-3 text-decoration-none" style="background:var(--brand-light); color:var(--brand-dark); font-weight:600;">
+                  <div class="fs-3">{{ cat.icon }}</div>
+                  <div class="small mt-1">{{ cat.name }}</div>
+                </a>
+              {% else %}
+                <a href="{% url 'workers:worker_list' %}?category={{ cat.pk }}" class="d-block text-center p-3 rounded-3 text-decoration-none" style="background:var(--brand-light); color:var(--brand-dark); font-weight:600;">
+                  <div class="fs-3">{{ cat.icon }}</div>
+                  <div class="small mt-1">{{ cat.name }}</div>
+                </a>
+              {% endif %}
+            </div>
+          {% empty %}
+            <div class="col-12 text-muted text-center py-4">Kategoriyalar topilmadi.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

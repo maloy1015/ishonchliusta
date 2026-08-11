@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Ro'yxatdan o'tish{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card p-4">
+      <h3 class="mb-1">Ro'yxatdan o'tish</h3>
+      <p class="text-muted mb-4">Ishonchli Usta oilasiga xush kelibsiz!</p>
+      <form method="post" novalidate id="registerForm">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label">{{ form.username.label }}</label>
+          {{ form.username }}
+          {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>{% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ form.first_name.label }}</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}<div class="text-danger small mt-1">{{ form.first_name.errors|striptags }}</div>{% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ form.phone.label }}</label>
+          {{ form.phone }}
+          {% if form.phone.errors %}<div class="text-danger small mt-1">{{ form.phone.errors|striptags }}</div>{% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ form.password1.label }}</label>
+          {{ form.password1 }}
+          {% if form.password1.errors %}<div class="text-danger small mt-1">{{ form.password1.errors|striptags }}</div>{% endif %}
+        </div>
+        <div class="mb-3">
+          <label class="form-label">{{ form.password2.label }}</label>
+          {{ form.password2 }}
+          {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <hr>
+        <label class="form-label fw-semibold">{{ form.role.label }}</label>
+        <div class="d-flex gap-3 mb-3" id="roleChoices">
+          {% for radio in form.role %}
+            <label class="role-card flex-fill p-3 border rounded-3 text-center" style="cursor:pointer;">
+              {{ radio.tag }}
+              <div class="mt-1 fw-semibold">
+                {% if radio.data.value == 'ishchi' %}🛠️ Ishchi (Usta){% else %}🧑‍💼 Ish beruvchi{% endif %}
+              </div>
+            </label>
+          {% endfor %}
+        </div>
+        {% if form.role.errors %}<div class="text-danger small mt-1 mb-2">{{ form.role.errors|striptags }}</div>{% endif %}
+
+        <div id="workerFields" style="display:none;">
+          <div class="mb-3">
+            <label class="form-label">{{ form.category.label }}</label>
+            {{ form.category }}
+            {% if form.category.errors %}<div class="text-danger small mt-1">{{ form.category.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ form.experience_years.label }}</label>
+            {{ form.experience_years }}
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mt-2">Ro'yxatdan o'tish</button>
+      </form>
+      <p class="text-center mt-3 mb-0 small">Akkountingiz bormi? <a href="{% url 'accounts:login' %}">Kirish</a></p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .role-card input[type=radio]{ display:none; }
+  .role-card{ transition:.15s; border-color:#e5e7eb!important; }
+  .role-card:has(input:checked){ border-color: var(--brand)!important; background: var(--brand-light); }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const radios = document.querySelectorAll('#roleChoices input[type=radio]');
+  const workerFields = document.getElementById('workerFields');
+  function toggle(){
+    const checked = document.querySelector('#roleChoices input[type=radio]:checked');
+    workerFields.style.display = (checked && checked.value === 'ishchi') ? '' : 'none';
+  }
+  radios.forEach(r => r.addEventListener('change', toggle));
+  toggle();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Ustalar reytingi{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h3>⭐ Ustalar reytingi</h3>
+  <p>Eng yuqori baholangan ustalar</p>
+</div>
+
+<div class="d-flex gap-2 flex-wrap mb-4">
+  <a href="{% url 'ratings:leaderboard' %}" class="btn btn-sm {% if not selected_category %}btn-primary{% else %}btn-outline-secondary{% endif %}">Barchasi</a>
+  {% for cat in categories %}
+    <a href="?category={{ cat.pk }}" class="btn btn-sm {% if selected_category == cat.pk|stringformat:'s' %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ cat.icon }} {{ cat.name }}</a>
+  {% endfor %}
+</div>
+
+<div class="card p-0">
+  <table class="table mb-0 align-middle">
+    <thead>
+      <tr><th>#</th><th>Usta</th><th>Kasbi</th><th>Reyting</th><th>Baholar soni</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for w in workers %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ w.first_name|default:w.username }}</td>
+          <td><span class="cat-chip">{{ w.category.icon }} {{ w.category.name|default:"—" }}</span></td>
+          <td><span class="stars">{% for i in "12345" %}{% if forloop.counter <= w.avg_rating %}★{% else %}☆{% endif %}{% endfor %}</span> {{ w.avg_rating|floatformat:1 }}</td>
+          <td>{{ w.ratings_total }}</td>
+          <td><a href="{% url 'accounts:profile_detail' w.pk %}" class="small">Profil</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-muted text-center py-4">Hozircha baholangan usta yo'q.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

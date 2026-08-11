@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Jonli lokatsiya{% endblock %}
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+  <a href="{% url 'chat:conversation' conversation.pk %}" class="text-muted">&larr;</a>
+  <div class="section-title mb-0">📍 Jonli lokatsiya — {{ other.first_name|default:other.username }} bilan</div>
+</div>
+
+<div class="card p-3 p-md-4">
+  <p class="text-muted small mb-3">
+    Ikkalangizning joriy joylashuvingiz shu yerda real vaqtga yaqin (har 8 soniyada) yangilanib turadi.
+    Lokatsiya faqat ilova ochiq turganda va ruxsat berilgan bo'lsa yangilanadi.
+  </p>
+  <div id="liveMap" style="height:440px; border-radius:14px; overflow:hidden;"></div>
+  <div class="row g-2 mt-3">
+    <div class="col-6">
+      <div class="p-2 rounded-3" style="background:var(--brand-light);">
+        <div class="small fw-semibold text-dark">🟢 Siz</div>
+        <div class="small text-muted" id="meUpdated">—</div>
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="p-2 rounded-3" style="background:#fff7ed;">
+        <div class="small fw-semibold text-dark">🟠 {{ other.first_name|default:other.username }}</div>
+        <div class="small text-muted" id="otherUpdated">—</div>
+      </div>
+    </div>
+  </div>
+  <div id="liveStatus" class="small text-muted mt-2"></div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const dataUrl = "{% url 'chat:live_location_data' conversation.pk %}";
+const map = L.map('liveMap').setView([41.311081, 69.240562], 12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap hissa qo\'shuvchilari'
+}).addTo(map);
+
+const meIcon = L.divIcon({ className: '', html: '<div style="background:#0d9488; width:20px; height:20px; border-radius:50%; border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.3);"></div>', iconSize: [20,20] });
+const otherIcon = L.divIcon({ className: '', html: '<div style="background:#f59e0b; width:20px; height:20px; border-radius:50%; border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.3);"></div>', iconSize: [20,20] });
+
+let meMarker = null, otherMarker = null;
+let fitted = false;
+
+function refresh(){
+    fetch(dataUrl)
+        .then(r => r.json())
+        .then(data => {
+            const status = document.getElementById('liveStatus');
+            const bounds = [];
+
+            if (data.me.lat && data.me.lng) {
+                if (!meMarker) meMarker = L.marker([data.me.lat, data.me.lng], {icon: meIcon}).addTo(map).bindPopup('Siz');
+                else meMarker.setLatLng([data.me.lat, data.me.lng]);
+                document.getElementById('meUpdated').textContent = data.me.updated_at ? ('Yangilangan: ' + data.me.updated_at) : 'Hali aniqlanmagan';
+                bounds.push([data.me.lat, data.me.lng]);
+            }
+
+            if (data.other.lat && data.other.lng) {
+                if (!otherMarker) otherMarker = L.marker([data.other.lat, data.other.lng], {icon: otherIcon}).addTo(map).bindPopup(data.other.name);
+                else otherMarker.setLatLng([data.other.lat, data.other.lng]);
+                document.getElementById('otherUpdated').textContent = data.other.updated_at ? ('Yangilangan: ' + data.other.updated_at) : 'Hali aniqlanmagan';
+                bounds.push([data.other.lat, data.other.lng]);
+            } else {
+                document.getElementById('otherUpdated').textContent = 'Hali lokatsiyasini ulashmagan';
+            }
+
+            if (bounds.length === 2 && !fitted) {
+                map.fitBounds(bounds, { padding: [40, 40] });
+                fitted = true;
+            } else if (bounds.length === 1 && !fitted) {
+                map.setView(bounds[0], 14);
+                fitted = true;
+            }
+            status.textContent = '🔄 Oxirgi yangilanish: ' + new Date().toLocaleTimeString();
+        })
+        .catch(() => { document.getElementById('liveStatus').textContent = '⚠️ Yangilanishda xatolik.'; });
+}
+
+refresh();
+setInterval(refresh, 8000);
+</script>
+{% endblock %}

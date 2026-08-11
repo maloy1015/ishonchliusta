@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Chat{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h3>💬 Suhbatlarim</h3>
+  <p>Ustalar va ish beruvchilar bilan yozishmalaringiz</p>
+</div>
+
+<div class="card p-0">
+  {% for row in rows %}
+    <a href="{% url 'chat:conversation' row.conversation.pk %}" class="d-flex align-items-center gap-3 p-3 border-bottom text-dark">
+      {% if row.other.profile_image %}
+        <img src="{{ row.other.profile_image.url }}" class="avatar-sm" style="width:44px; height:44px;">
+      {% else %}
+        <div class="avatar-placeholder" style="width:44px; height:44px;">👤</div>
+      {% endif %}
+      <div class="flex-grow-1">
+        <div class="fw-semibold">{{ row.other.first_name|default:row.other.username }}</div>
+        <div class="text-muted small">
+          {% if row.last %}
+            {% if row.last.message_type == 'text' %}{{ row.last.text|truncatechars:40 }}
+            {% elif row.last.message_type == 'voice' %}🎤 Ovozli xabar
+            {% else %}{{ row.last.sticker_code }} Stiker{% endif %}
+          {% else %}Suhbat boshlanmagan{% endif %}
+        </div>
+      </div>
+      {% if row.last %}<div class="text-muted small">{{ row.last.created_at|date:"d.m H:i" }}</div>{% endif %}
+    </a>
+  {% empty %}
+    <div class="empty-state">Hozircha suhbatlaringiz yo'q. Usta yoki ish beruvchi profiliga kirib "Chat" tugmasini bosing.</div>
+  {% endfor %}
+</div>
+{% endblock %}

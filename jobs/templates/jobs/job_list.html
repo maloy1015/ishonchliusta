@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Ish e'lonlari{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <h3>💼 Ish e'lonlari</h3>
+  <p>Sizga eng yaqin va mos e'lonlar</p>
+</div>
+
+<form method="get" class="mb-3">
+  {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
+  <div class="row g-2">
+    <div class="col-md-8">
+      <div class="input-group">
+        <span class="input-group-text bg-white">🔎</span>
+        <input type="text" name="q" value="{{ query|default:'' }}" class="form-control" placeholder="Ish nomi, kategoriya yoki manzil bo'yicha qidirish...">
+      </div>
+    </div>
+    <div class="col-md-4">
+      <select name="radius" class="form-select" onchange="this.form.submit()">
+        <option value="">📍 Radius: cheklovsiz</option>
+        <option value="5" {% if radius == "5" %}selected{% endif %}>5 km ichida</option>
+        <option value="10" {% if radius == "10" %}selected{% endif %}>10 km ichida</option>
+        <option value="20" {% if radius == "20" %}selected{% endif %}>20 km ichida</option>
+        <option value="50" {% if radius == "50" %}selected{% endif %}>50 km ichida</option>
+      </select>
+    </div>
+  </div>
+  <div class="d-flex gap-2 mt-2">
+    <button type="submit" class="btn btn-primary btn-sm">Qidirish</button>
+    {% if query or radius %}<a href="?{% if selected_category %}category={{ selected_category }}{% endif %}" class="btn btn-outline-secondary btn-sm">Tozalash</a>{% endif %}
+  </div>
+</form>
+
+<div class="d-flex gap-2 flex-wrap mb-4">
+  <a href="{% url 'jobs:job_list' %}?category=" class="btn btn-sm {% if not selected_category %}btn-primary{% else %}btn-outline-secondary{% endif %}">Barchasi</a>
+  {% for cat in categories %}
+    <a href="?category={{ cat.pk }}{% if query %}&q={{ query }}{% endif %}" class="btn btn-sm {% if selected_category == cat.pk|stringformat:'s' %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ cat.icon }} {{ cat.name }}</a>
+  {% endfor %}
+</div>
+
+<div class="row g-3">
+  {% for job in jobs %}
+    <div class="col-md-6">
+      <div class="card hoverable p-3 h-100 {% if job.is_boosted %}border border-warning border-2{% endif %}">
+        {% if job.is_boosted %}<span class="badge bg-warning text-dark mb-2">⚡ Tezkor e'lon</span>{% endif %}
+        <div class="d-flex justify-content-between align-items-start">
+          <span class="cat-chip">{{ job.category.icon }} {{ job.category.name|default:"—" }}</span>
+          {% if job.dist is not None %}<span class="dist-chip">📍 {{ job.dist }} km</span>{% endif %}
+        </div>
+        <h5 class="mt-2 mb-1">{{ job.title }}</h5>
+        <p class="small text-muted mb-2">{{ job.description|truncatewords:25 }}</p>
+        <div class="d-flex justify-content-between align-items-center mt-auto">
+          <span class="fw-semibold">{% if job.budget %}{{ job.budget }} so'm{% else %}Kelishiladi{% endif %}</span>
+          <a href="{% url 'accounts:profile_detail' job.employer.pk %}" class="btn btn-outline-primary btn-sm">Ish beruvchi bilan bog'lanish</a>
+        </div>
+        {% if job.address %}<div class="text-muted small mt-2">📍 {{ job.address }}</div>{% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12"><div class="empty-state">Hozircha mos e'lon topilmadi.</div></div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Bosh sahifa{% endblock %}
+{% block content %}
+
+<div class="page-hero">
+  <h3>Assalomu alaykum, {{ user.first_name|default:user.username }}! 👋</h3>
+  <p>Ishonchli ustani shu yerdan toping</p>
+  <div class="mt-3 d-flex gap-2 flex-wrap">
+    <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#categoriesModal">🗂️ Kategoriyalar</button>
+    <a href="{% url 'workers:worker_list' %}" class="btn btn-accent">🔎 Usta qidirish</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <a href="{% url 'workers:worker_list' %}" class="quick-tile">
+      <div class="icon">🛠️</div>
+      <div class="fw-semibold small">Ustalar</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="{% url 'jobs:job_create' %}" class="quick-tile">
+      <div class="icon">📢</div>
+      <div class="fw-semibold small">E'lon berish</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="{% url 'ratings:leaderboard' %}" class="quick-tile">
+      <div class="icon">⭐</div>
+      <div class="fw-semibold small">Reyting</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="{% url 'accounts:location_picker' %}" class="quick-tile">
+      <div class="icon">📍</div>
+      <div class="fw-semibold small">Lokatsiya</div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="{% url 'chat:inbox' %}" class="quick-tile">
+      <div class="icon">💬</div>
+      <div class="fw-semibold small">Chat</div>
+    </a>
+  </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="section-title mb-0">🆕 Yangi qo'shilgan ustalar</div>
+  <a href="{% url 'workers:worker_list' %}" class="small">Barchasi &rarr;</a>
+</div>
+<div class="row g-3">
+  {% for w in top_workers %}
+    <div class="col-md-4">
+      <div class="card hoverable p-3 h-100">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          {% if w.profile_image %}
+            <img src="{{ w.profile_image.url }}" class="avatar-sm" style="width:44px; height:44px;">
+          {% else %}
+            <div class="avatar-placeholder" style="width:44px; height:44px;">👤</div>
+          {% endif %}
+          <div>
+            <div class="fw-semibold">{{ w.first_name|default:w.username }}</div>
+            <span class="cat-chip">{{ w.category.icon }} {{ w.category.name|default:"—" }}</span>
+          </div>
+        </div>
+        <a href="{% url 'accounts:profile_detail' w.pk %}" class="btn btn-outline-primary btn-sm w-100 mt-auto">Profilni ko'rish</a>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12"><div class="empty-state">Hozircha usta yo'q.</div></div>
+  {% endfor %}
+</div>
+{% endblock %}

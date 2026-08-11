@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block title %}{{ other.first_name|default:other.username }} bilan chat{% endblock %}
+{% block content %}
+
+<div class="chat-shell" id="chatShell">
+  <div class="chat-header">
+    <a href="{% url 'chat:inbox' %}" class="text-muted fs-5">&larr;</a>
+    {% if other.profile_image %}
+      <img src="{{ other.profile_image.url }}" class="avatar-sm" style="width:40px; height:40px;">
+    {% else %}
+      <div class="avatar-placeholder" style="width:40px; height:40px;">👤</div>
+    {% endif %}
+    <div class="flex-grow-1">
+      <a href="{% url 'accounts:profile_detail' other.pk %}" class="fw-semibold text-dark">{{ other.first_name|default:other.username }}</a>
+      <div class="text-muted small">{% if other.is_worker %}{{ other.category.icon }} {{ other.category.name }}{% else %}Ish beruvchi{% endif %}</div>
+    </div>
+    <a href="{% url 'chat:live_location' conversation.pk %}" class="btn btn-outline-primary btn-sm">📍 Jonli lokatsiya</a>
+  </div>
+
+  <div id="messagesBox" class="chat-messages">
+    {% for m in messages_list %}
+      <div class="d-flex mb-2 {% if m.sender_id == user.pk %}justify-content-end{% endif %}" data-msg-id="{{ m.pk }}">
+        <div style="max-width:75%;" class="{% if m.sender_id == user.pk %}bg-primary text-white{% else %}bg-white{% endif %} rounded-3 px-3 py-2 shadow-sm">
+          {% if m.message_type == 'text' %}
+            <div>{{ m.text }}</div>
+          {% elif m.message_type == 'voice' %}
+            <audio controls src="{{ m.voice_file.url }}" style="max-width:220px;"></audio>
+          {% else %}
+            <div style="font-size:2rem; line-height:1;">{{ m.sticker_code }}</div>
+          {% endif %}
+          <div class="small {% if m.sender_id == user.pk %}text-white-50{% else %}text-muted{% endif %} text-end mt-1">{{ m.created_at|date:"H:i" }}</div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="text-center text-muted small mt-5">Suhbatni boshlang 👋</div>
+    {% endfor %}
+  </div>
+
+  <div class="chat-input-area">
+    <div id="pickerRow" class="d-flex gap-1 flex-wrap mb-2" style="display:none!important;"></div>
+    <div class="d-flex align-items-center gap-2">
+      <button type="button" id="btnStickers" class="btn btn-outline-secondary btn-sm">😊</button>
+      <button type="button" id="btnGifs" class="btn btn-outline-secondary btn-sm">GIF</button>
+      <input type="text" id="textInput" class="form-control" placeholder="Xabar yozing...">
+      <button type="button" id="btnMic" class="btn btn-outline-secondary btn-sm">🎤</button>
+      <button type="button" id="btnSend" class="btn btn-primary btn-sm">Yuborish</button>
+    </div>
+    <div id="recStatus" class="small text-danger mt-1" style="display:none;">🔴 Yozilmoqda... (to'xtatish uchun 🎤 ni yana bosing)</div>
+  </div>
+</div>
+
+<style>
+  .chat-shell{
+      display:flex; flex-direction:column; background:#fff; border-radius:var(--radius);
+      box-shadow:0 1px 2px rgba(17,24,39,.04), 0 8px 24px rgba(17,24,39,.06);
+      max-width:800px; margin:0 auto; overflow:hidden;
+  }
+  .chat-header{ display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid #eef0f2; flex-shrink:0; }
+  .chat-messages{ flex:1 1 auto; overflow-y:auto; padding:16px; background:#f8fafc; }
+  .chat-input-area{ padding:12px 16px; border-top:1px solid #eef0f2; flex-shrink:0; background:#fff; }
+  @media (max-width:768px){
+    .chat-header a.btn{ padding:.35rem .6rem; font-size:.78rem; }
+  }
+</style>
+
+<script>
+function fitChatHeight(){
+    const shell = document.getElementById('chatShell');
+    const top = shell.getBoundingClientRect().top + window.scrollY;
+    const bottomMargin = window.innerWidth < 768 ? 16 : 30;
+    const available = window.innerHeight - shell.getBoundingClientRect().top - bottomMargin;
+    shell.style.height = Math.max(available, 420) + 'px';
+}
+window.addEventListener('resize', fitChatHeight);
+window.addEventListener('load', fitChatHeight);
+fitChatHeight();
+
+const conversationId = {{ conversation.pk }};
+const myUserId = {{ user.pk }};
+const sendUrl = "{% url 'chat:send_message' conversation.pk %}";
+const fetchUrl = "{% url 'chat:fetch_messages' conversation.pk %}";
+const STICKERS = {{ stickers|safe }};
+const GIFS = {{ gifs|safe }};
+
+function getCookie(name) {
+    const value = "; " + document.cookie;
+    const parts = value.split("; " + name + "=");
+    if (parts.length === 2) return parts.pop().split(";").shift();
+    return "";
+}
+const csrftoken = getCookie('csrftoken');
+
+const messagesBox = document.getElementById('messagesBox');
+let lastId = {{ messages_list.last.pk|default:0 }};
+
+function scrollBottom(){ messagesBox.scrollTop = messagesBox.scrollHeight; }
+scrollBottom();
+
+function appendMessage(m){
+    const mine = m.sender_id === myUserId;
+    const wrap = document.createElement('div');
+    wrap.className = 'd-flex mb-2 ' + (mine ? 'justify-content-end' : '');
+    wrap.dataset.msgId = m.id;
+    wrap.style.opacity = '0';
+    wrap.style.transform = 'translateY(8px)';
+    wrap.style.transition = 'opacity .25s ease, transform .25s ease';
+
+    let inner = '';
+    if (m.type === 'text') {
+        inner = `<div>${escapeHtml(m.text)}</div>`;
+    } else if (m.type === 'voice') {
+        inner = `<audio controls src="${m.voice_url}" style="max-width:220px;"></audio>`;
+    } else {
+        inner = `<div style="font-size:2rem; line-height:1;">${m.sticker_code}</div>`;
+    }
+
+    wrap.innerHTML = `<div style="max-width:75%;" class="${mine ? 'bg-primary text-white' : 'bg-white'} rounded-3 px-3 py-2 shadow-sm">
+        ${inner}
+        <div class="small ${mine ? 'text-white-50' : 'text-muted'} text-end mt-1">${m.created_at}</div>
+    </div>`;
+    messagesBox.appendChild(wrap);
+    requestAnimationFrame(() => { wrap.style.opacity = '1'; wrap.style.transform = 'translateY(0)'; });
+    scrollBottom();
+}
+
+function escapeHtml(str){
+    const d = document.createElement('div');
+    d.innerText = str;
+    return d.innerHTML;
+}
+
+function sendPayload(formData){
+    formData.append('csrfmiddlewaretoken', csrftoken);
+    fetch(sendUrl, { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                appendMessage(data.message);
+                lastId = data.message.id;
+            }
+        });
+}
+
+document.getElementById('btnSend').addEventListener('click', function(){
+    const input = document.getElementById('textInput');
+    const text = input.value.trim();
+    if (!text) return;
+    const fd = new FormData();
+    fd.append('message_type', 'text');
+    fd.append('text', text);
+    sendPayload(fd);
+    input.value = '';
+});
+document.getElementById('textInput').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') document.getElementById('btnSend').click();
+});
+
+function buildPicker(list, type){
+    const row = document.getElementById('pickerRow');
+    row.innerHTML = '';
+    list.forEach(code => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-light btn-sm';
+        btn.style.fontSize = '1.4rem';
+        btn.textContent = code;
+        btn.addEventListener('click', function(){
+            const fd = new FormData();
+            fd.append('message_type', type);
+            fd.append('sticker_code', code);
+            sendPayload(fd);
+            row.style.setProperty('display', 'none', 'important');
+        });
+        row.appendChild(btn);
+    });
+}
+
+document.getElementById('btnStickers').addEventListener('click', function(){
+    const row = document.getElementById('pickerRow');
+    const isHidden = row.style.display === 'none' || getComputedStyle(row).display === 'none';
+    if (isHidden) { buildPicker(STICKERS, 'sticker'); row.style.setProperty('display', 'flex', 'important'); }
+    else { row.style.setProperty('display', 'none', 'important'); }
+});
+document.getElementById('btnGifs').addEventListener('click', function(){
+    const row = document.getElementById('pickerRow');
+    const isHidden = row.style.display === 'none' || getComputedStyle(row).display === 'none';
+    if (isHidden) { buildPicker(GIFS, 'gif'); row.style.setProperty('display', 'flex', 'important'); }
+    else { row.style.setProperty('display', 'none', 'important'); }
+});
+
+// Ovozli xabar yozish (MediaRecorder API)
+let mediaRecorder, audioChunks = [], isRecording = false;
+document.getElementById('btnMic').addEventListener('click', async function(){
+    const statusEl = document.getElementById('recStatus');
+    if (!isRecording) {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert("Brauzeringiz mikrofonni qo'llab-quvvatlamaydi.");
+            return;
+        }
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = function(){
+                const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                const fd = new FormData();
+                fd.append('message_type', 'voice');
+                fd.append('voice_file', blob, 'voice.webm');
+                sendPayload(fd);
+                stream.getTracks().forEach(t => t.stop());
+            };
+            mediaRecorder.start();
+            isRecording = true;
+            statusEl.style.display = '';
+            this.classList.add('btn-danger');
+        } catch (err) {
+            alert("Mikrofonga ruxsat berilmadi.");
+        }
+    } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        statusEl.style.display = 'none';
+        this.classList.remove('btn-danger');
+    }
+});
+
+// Yangi xabarlarni davriy so'rash (polling)
+setInterval(function(){
+    fetch(fetchUrl + '?after=' + lastId)
+        .then(r => r.json())
+        .then(data => {
+            data.messages.forEach(m => {
+                appendMessage(m);
+                lastId = m.id;
+            });
+        });
+}, 3000);
+</script>
+{% endblock %}

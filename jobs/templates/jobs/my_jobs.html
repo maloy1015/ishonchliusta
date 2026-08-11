@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Mening e'lonlarim{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+    <div>
+      <h3>Mening e'lonlarim</h3>
+      <p>Joylagan ish e'lonlaringizni boshqaring</p>
+    </div>
+    <a href="{% url 'jobs:job_create' %}" class="btn btn-light btn-sm">+ Yangi e'lon</a>
+  </div>
+</div>
+
+{% for job in jobs %}
+  <div class="card p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+      <div>
+        <span class="cat-chip">{{ job.category.icon }} {{ job.category.name|default:"—" }}</span>
+        <span class="badge {% if job.status == 'ochiq' %}bg-success{% else %}bg-secondary{% endif %} ms-2">{{ job.get_status_display }}</span>
+        <h5 class="mt-2 mb-1">{{ job.title }}</h5>
+        <p class="small text-muted mb-1">{{ job.description }}</p>
+        <div class="text-muted small">{% if job.budget %}{{ job.budget }} so'm{% endif %} {% if job.address %}· {{ job.address }}{% endif %}</div>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'payments:boost_job' job.pk %}" class="btn btn-sm btn-accent">⚡ Tezkor qilish</a>
+        <form method="post" action="{% url 'jobs:job_toggle_status' job.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-secondary">{% if job.status == 'ochiq' %}Yopish{% else %}Qayta ochish{% endif %}</button>
+        </form>
+        <form method="post" action="{% url 'jobs:job_delete' job.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-danger">O'chirish</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% empty %}
+  <div class="empty-state">Hozircha e'loningiz yo'q. <a href="{% url 'jobs:job_create' %}">Birinchi e'loningizni joylang</a></div>
+{% endfor %}
+{% endblock %}

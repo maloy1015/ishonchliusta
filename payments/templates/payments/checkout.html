@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}To'lov{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card p-4 text-center">
+      {% if checkout_url %}
+        <div class="fs-1 mb-3">💳</div>
+        <h5 class="mb-2">Payme orqali to'lovga o'tish</h5>
+        <p class="text-muted mb-4">Summasi: <strong>{{ order.amount_som }} so'm</strong></p>
+        <a href="{{ checkout_url }}" class="btn btn-accent w-100" target="_blank">Payme'ga o'tish</a>
+        <p class="text-muted small mt-3">To'lovni yakunlagach, bu sahifaga qayting yoki avtomatik qaytariladi.</p>
+      {% else %}
+        <div class="fs-1 mb-3">⚠️</div>
+        <h5 class="mb-2">To'lov tizimi hali sozlanmagan</h5>
+        <p class="text-muted">
+          Sayt egasi Payme Merchant ID va kalitini hali <code>.env</code> fayliga kiritmagan.
+          Bu — dasturiy xato emas, balki hali Payme bilan hamkorlik shartnomasi rasmiylashtirilmaganini bildiradi.
+        </p>
+      {% endif %}
+      <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary w-100 mt-3">Bosh sahifaga qaytish</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
